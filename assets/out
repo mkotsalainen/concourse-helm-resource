@@ -99,9 +99,19 @@ current_revision() {
   helm history --tiller-namespace $tiller_namespace $release | grep "DEPLOYED" | awk '{ print $1 }'
 }
 
+helm_install_local_chart_dependencies()  {
+  helm_cmd="helm dependency update $chart_full"
+  helm_echo="helm dependency update $chart_full"
+  echo "Running command $helm_echo"
+  eval "$helm_cmd"
+}
+
 helm_upgrade() {
-  helm_cmd="helm upgrade --install --tiller-namespace --dep-up $tiller_namespace --namespace $namespace $release"
-  helm_echo="helm upgrade --install --tiller-namespace --dep-up $tiller_namespace --namespace $namespace $release"
+  if [[ -d "$chart_full" ]]; then
+    helm_install_local_chart_dependencies
+  fi
+  helm_cmd="helm upgrade --install --tiller-namespace $tiller_namespace --namespace $namespace $release"
+  helm_echo="helm upgrade --install --tiller-namespace $tiller_namespace --namespace $namespace $release"
   if [ -n "$values" ]; then
     for value in $values; do
       helm_cmd="$helm_cmd -f $source/$value"
